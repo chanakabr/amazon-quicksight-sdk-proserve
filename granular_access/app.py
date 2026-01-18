@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-
-from aws_cdk import core
+# filepath: c:\Users\cratnaya\OneDrive\repos\amazon-quicksight-sdk-proserve\granular_access\app.py
+from aws_cdk import App
 
 from granular_access.granular_access_stack import GranularAccessStack
 
 
-app = core.App()
+app = App()
 GranularAccessStack(app, "granular-access")
 
 app.synth()

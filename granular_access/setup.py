@@ -19,7 +19,8 @@ setuptools.setup(
     packages=setuptools.find_packages(where="granular_access"),
 
     install_requires=[
-        "aws-cdk.core==1.72.0",
+        "aws-cdk-lib>=2.0.0",
+        "constructs>=10.0.0",
     ],
 
     python_requires=">=3.6",

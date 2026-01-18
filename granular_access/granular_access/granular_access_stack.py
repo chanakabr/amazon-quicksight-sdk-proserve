@@ -1,5 +1,8 @@
 from aws_cdk import (
-            core,
+            Stack,
+            Duration,
+            RemovalPolicy,
+            Aws,
             aws_s3 as s3,
             aws_s3_deployment as s3deploy,
             aws_iam as iam,
@@ -8,6 +11,7 @@ from aws_cdk import (
             aws_events as events,
             aws_events_targets as targets
         )
+from constructs import Construct
 import boto3
 import json
 import os
@@ -19,19 +23,19 @@ if os.environ.get("CDK_DEPLOY_REGION", os.environ["CDK_DEFAULT_REGION"]) == 'us-
 elif os.environ.get("CDK_DEPLOY_REGION", os.environ["CDK_DEFAULT_REGION"]) == 'eu-west-1':
     prefix = 'eu'
 
-class GranularAccessStack(core.Stack):
+class GranularAccessStack(Stack):
 
-    def __init__(self, scope: core.Construct, id: str, **kwargs) -> None:
+    def __init__(self, scope: Construct, id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
-        stack = core.Stack.of(self)
+        stack = Stack.of(self)
         aws_region = os.environ.get("CDK_DEPLOY_REGION", os.environ["CDK_DEFAULT_REGION"])
         account_id = stack.account
 
         granular_access = GranularAccess(self, 'granular_access')
 
-class GranularAccess(core.Construct):
-    def __init__(self, scope: core.Construct, id: str, **kwargs) -> None:
+class GranularAccess(Construct):
+    def __init__(self, scope: Construct, id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
         aws_region = os.environ.get("CDK_DEPLOY_REGION", os.environ["CDK_DEFAULT_REGION"])
@@ -92,7 +96,7 @@ class GranularAccess(core.Construct):
         bucket = s3.Bucket(self, f'qs-granular-access-demo-{account_id}',
                            bucket_name=f'qs-granular-access-demo-{account_id}',
                            versioned=True,
-                           removal_policy=core.RemovalPolicy.DESTROY,
+                           removal_policy=RemovalPolicy.DESTROY,
                            auto_delete_objects=True)
 
         s3deploy.BucketDeployment(self, "DeployMembership",
@@ -139,7 +143,7 @@ class GranularAccess(core.Construct):
             id='lambda-role',
             description='Role for the quicksight lambda',
             role_name=f'{aws_region}-role-quicksight-lambda',
-            max_session_duration=core.Duration.seconds(3600),
+            max_session_duration=Duration.seconds(3600),
             assumed_by=iam.ServicePrincipal('lambda.amazonaws.com'),
             inline_policies={
                 'AllowS3Access': iam.PolicyDocument(
@@ -205,61 +209,61 @@ class GranularAccess(core.Construct):
 
         user_init = _lambda.Function(self, 'user_init',
                                            handler='user_init.lambda_handler',
-                                           runtime=_lambda.Runtime.PYTHON_3_7,
+                                           runtime=_lambda.Runtime.PYTHON_3_9,
                                            code=_lambda.Code.from_asset(os.path.join(current_dir,
                                                                                      '../lambda_functions/user_init/')),
                                            function_name='user_init',
                                            role=lambda_role,
-                                           timeout=core.Duration.minutes(15),
+                                           timeout=Duration.minutes(15),
                                            memory_size=512
                                            )
 
         check_team_members = _lambda.Function(self, 'check_team_members',
                                                     handler='check_team_members.lambda_handler',
-                                                    runtime=_lambda.Runtime.PYTHON_3_7,
+                                                    runtime=_lambda.Runtime.PYTHON_3_9,
                                                     code=_lambda.Code.from_asset(os.path.join(current_dir,
                                                                                               '../lambda_functions/check_team_members/')),
                                                     function_name='check_team_members',
                                                     role=lambda_role,
-                                                    timeout=core.Duration.minutes(15),
+                                                    timeout=Duration.minutes(15),
                                                     memory_size=512,
-                                                    environment={'aws_region': f'{core.Aws.REGION}'}
+                                                    environment={'aws_region': f'{Aws.REGION}'}
                                                     )
 
         downgrade_user = _lambda.Function(self, 'downgrade_user',
                                                 handler='downgrade_user.lambda_handler',
-                                                runtime=_lambda.Runtime.PYTHON_3_8,
+                                                runtime=_lambda.Runtime.PYTHON_3_9,
                                                 code=_lambda.Code.from_asset(os.path.join(current_dir,
                                                                                           '../lambda_functions/downgrade_user/')),
                                                 function_name='downgrade_user',
                                                 role=lambda_role,
-                                                timeout=core.Duration.minutes(15),
+                                                timeout=Duration.minutes(15),
                                                 memory_size=2048,
-                                                environment={'aws_region': f'{core.Aws.REGION}'}
+                                                environment={'aws_region': f'{Aws.REGION}'}
                                                 )
 
         granular_user_govenance = _lambda.Function(self, 'granular_user_govenance',
                                                  handler='granular_user_govenance.lambda_handler',
-                                                 runtime=_lambda.Runtime.PYTHON_3_7,
+                                                 runtime=_lambda.Runtime.PYTHON_3_9,
                                                  code=_lambda.Code.from_asset(os.path.join(current_dir,
                                                                                            '../lambda_functions/granular_user_govenance')),
                                                  function_name='granular_user_govenance',
                                                  role=lambda_role,
-                                                 timeout=core.Duration.minutes(15),
+                                                 timeout=Duration.minutes(15),
                                                  memory_size=2048,
-                                                 environment={'aws_region': f'{core.Aws.REGION}'}
+                                                 environment={'aws_region': f'{Aws.REGION}'}
                                                 )
 
         granular_access_assets_govenance = _lambda.Function(self, 'granular_access_assets_govenance',
                                                    handler='granular_access_assets_govenance.lambda_handler',
-                                                   runtime=_lambda.Runtime.PYTHON_3_7,
+                                                   runtime=_lambda.Runtime.PYTHON_3_9,
                                                    code=_lambda.Code.from_asset(os.path.join(current_dir,
                                                                                              '../lambda_functions/granular_access_assets_govenance')),
                                                    function_name='granular_access_assets_govenance',
                                                    role=lambda_role,
-                                                   timeout=core.Duration.minutes(15),
+                                                   timeout=Duration.minutes(15),
                                                    memory_size=2048,
-                                                   environment={'aws_region': f'{core.Aws.REGION}'}
+                                                   environment={'aws_region': f'{Aws.REGION}'}
                                                    )
 
         quicksight_event_rule = events.Rule(self, 'QuickSightCWEventRule',
@@ -288,7 +292,7 @@ class GranularAccess(core.Construct):
             "SAML:aud": "https://signin.aws.amazon.com/saml"}}
 
         quicksight_federated_prin_with_conditionb_obj = iam.FederatedPrincipal(
-            f'arn:aws:iam::{core.Aws.ACCOUNT_ID}:saml-provider/saml', quicksight_assume_condition_object,
+            f'arn:aws:iam::{Aws.ACCOUNT_ID}:saml-provider/saml', quicksight_assume_condition_object,
             'sts:AssumeRoleWithSAML')
 
         quicksight_resource_scope = '${aws:userid}'
@@ -299,7 +303,7 @@ class GranularAccess(core.Construct):
                         effect=iam.Effect.ALLOW,
                         actions=['quicksight:CreateReader'],
                         resources=[
-                            f'arn:aws:quicksight::{core.Aws.ACCOUNT_ID}:user/{quicksight_resource_scope}']
+                            f'arn:aws:quicksight::{Aws.ACCOUNT_ID}:user/{quicksight_resource_scope}']
                     )
                 ]
             )
@@ -310,8 +314,7 @@ class GranularAccess(core.Construct):
             id=f"quicksight-fed-{prefix}-users",  # this is the default group with no access
             description='Role for the quicksight reader SAML',
             role_name=f"quicksight-fed-{prefix}-users",
-            max_session_duration=core.Duration.seconds(3600),
+            max_session_duration=Duration.seconds(3600),
             assumed_by=quicksight_federated_prin_with_conditionb_obj,
             inline_policies=quicksight_reader_saml_inline_policies
         )
-
